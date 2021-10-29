@@ -1,0 +1,22 @@
+# This would work
+# [build]
+# rustflags = ["--cfg", "my_flag"]
+
+# However, this does not build (see below)
+# Something like `[target.'cfg(unix)']` would have made more sense
+# But for this minimal reproducer, let's use a condition that will always be true: `any(C, not(C))`
+[target.'cfg(any(test, not(test)))']
+rustflags = ["--cfg", "my_flag"]
+
+# This does not build because the tokio compilation will fail:
+#
+#       error[E0433]: failed to resolve: use of undeclared crate or module `bitflags`
+#        --> src/main.rs:2:5
+#         |
+#       3 |     bitflags::bitflags! { }
+#         |     ^^^^^^^^ use of undeclared crate or module `bitflags`
+#
+# The rustflags are correctly passed to rustc when building
+# However, it looks the rustflags are not always passed to cargo when resolving dependencies
+#   * the ones declared in `[build]` are passed,
+#   * the ones declared in `[target.'cfg(...)']` are not.
